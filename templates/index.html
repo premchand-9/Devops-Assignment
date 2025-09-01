@@ -167,7 +167,7 @@
                 if (data.length === 0) {
                     deleteButton.style.display = 'none';
                 } else {
-                    deleteButton.style.display = 'block'; // Or 'inline-block' depending on original display style
+                    deleteButton.style.display = 'block';
                 }
                 data.forEach(workout => {
                     const row = document.createElement('tr');
@@ -201,10 +201,10 @@
             const anyCheckboxSelected = document.querySelectorAll('.workout-checkbox:checked').length > 0;
             deleteButton.disabled = !anyCheckboxSelected;
             if (anyCheckboxSelected) {
-                deleteButton.style.backgroundColor = ''; // Reset to default or a distinct color
+                deleteButton.style.backgroundColor = '';
                 deleteButton.style.cursor = 'pointer';
             } else {
-                deleteButton.style.backgroundColor = '#cccccc'; // Grey out
+                deleteButton.style.backgroundColor = '#cccccc';
                 deleteButton.style.cursor = 'not-allowed';
             }
         }

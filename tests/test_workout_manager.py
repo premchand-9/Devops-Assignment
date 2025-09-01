@@ -14,7 +14,6 @@ class TestWorkoutManager(unittest.TestCase):
             json.dump([], f)
 
     def tearDown(self):
-        # Clean up the test file after each test
         if os.path.exists(self.test_data_file):
             os.remove(self.test_data_file)
 
