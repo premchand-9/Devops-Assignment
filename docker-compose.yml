@@ -1,0 +1,9 @@
+services:
+  app:
+    build: .
+    image: aceestfitness
+    container_name: aceestfitness-app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data

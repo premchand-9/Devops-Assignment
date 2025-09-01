@@ -1,0 +1,20 @@
+[
+    {
+        "workout": "Run",
+        "duration": 90,
+        "category": "Cardio",
+        "customer_name": "Chand",
+        "starting_time": 7,
+        "date": "2025-08-27 13:51:06",
+        "id": "c661a960-e33b-4159-bfb4-38b4ded9f3f2"
+    },
+    {
+        "workout": "Run",
+        "duration": 60,
+        "category": "Cardio",
+        "customer_name": "Balu",
+        "starting_time": 6,
+        "date": "2025-09-01 20:53:03",
+        "id": "c5d2b530-4a40-4f66-9bcf-34d5aea35cbc"
+    }
+]

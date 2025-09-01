@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACEest Fitness Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>ACEest Fitness Tracker</h1>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'add-workout')" data-tab-name="add-workout">Add Workout</button>
+            <button class="tab-button" onclick="openTab(event, 'workout-history')" data-tab-name="workout-history">Workout History</button>
+            <button class="tab-button" onclick="openTab(event, 'statistics')" data-tab-name="statistics">Statistics</button>
+        </div>
+
+        <div id="add-workout" class="tab-content active">
+            <div class="form-section">
+                <form id="workout-form">
+                    <div class="form-group">
+                        <label for="customerName">Name:</label>
+                        <input type="text" id="customerName" name="customer_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Category:</label>
+                        <select id="category" name="category" required onchange="updateWorkoutNames()">
+                            <option value="Cardio">Cardio</option>
+                            <option value="Strength">Strength</option>
+                            <option value="Flexibility">Flexibility</option>
+                            <option value="Balance">Balance</option>
+
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="workoutName">Workout:</label>
+                        <select id="workoutName" name="workoutName" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="startingTime">Starting Time:</label>
+                        <select id="startingTime" name="startingTime" required>
+                            <option value="">Select Time</option>
+                            <script>
+                                for (let i = 6; i <= 20; i++) {
+                                    document.write(`<option value="${i}">${i}:00</option>`);
+                                }
+                            </script>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Duration (minutes):</label>
+                        <input type="number" id="duration" name="duration" required max="120">
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-primary">Add Workout</button>
+                        <button type="submit" class="btn btn-primary" onclick="openTab(event, 'workout-history')">View Workouts</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="workout-history" class="tab-content">
+            <table id="workouts-table">
+                <thead>
+                    <tr>
+                        <th>Select</th>
+                        <th>Name</th>
+                        <th>Workout</th>
+                        <th>Category</th>
+                        <th>Duration (minutes)</th>
+                        <th>Starting Time</th>
+                    </tr>
+                </thead>
+                <tbody id="workouts-list"></tbody>
+            </table>
+            <div style="text-align: center; margin-top: 10px;">
+                <button id="delete-selected" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+
+        <div id="statistics" class="tab-content">
+            <div id="stats-content">
+                <p><strong>Total Workouts:</strong> <span id="total-workouts">0</span></p>
+                <p><strong>Total Workout Time:</strong> <span id="total-time">0</span> minutes</p>
+                <p><strong>Average Workout Time:</strong> <span id="average-time">0</span> minutes</p>
+                <p><strong>Most Common Workout:</strong> <span id="most-common-workout">None</span></p>
+                <p><strong>Most Common Category:</strong> <span id="most-common-category">None</span></p>
+                <h3>Category Breakdown:</h3>
+                <ul id="category-breakdown"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const categoryWorkouts = {
+            "Cardio": ["Run", "Cycling", "Swimming", "Rowing", "HIIT", "Jumping Jacks", "Treadmill", "Elliptical"],
+            "Strength": ["Lift", "Push-ups", "Pull-ups", "Squats", "Deadlifts", "Bench Press", "Overhead Press", "Bicep Curls", "Tricep Extensions"],
+            "Flexibility": ["Yoga", "Stretching", "Pilates", "Dynamic Stretching", "Static Stretching"],
+            "Balance": ["Balance Board", "Single-leg Stance", "Tree Pose", "Warrior III"]
+        };
+
+        function updateWorkoutNames() {
+            const category = document.getElementById('category').value;
+            const workoutNameSelect = document.getElementById('workoutName');
+            workoutNameSelect.innerHTML = '';
+
+            const workouts = categoryWorkouts[category] || [];
+            workouts.forEach(workout => {
+                const option = document.createElement('option');
+                option.value = workout;
+                option.textContent = workout;
+                workoutNameSelect.appendChild(option);
+            });
+            if (workouts.length > 0) {
+                workoutNameSelect.value = workouts[0];
+            }
+        }
+
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+            if (tabName === 'workout-history') {
+                fetchWorkouts();
+            } else if (tabName === 'statistics') {
+                fetchStats();
+            }
+        }
+
+        document.getElementById('delete-selected').addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('.workout-checkbox:checked');
+            const workoutIds = Array.from(checkboxes).map(checkbox => checkbox.dataset.id);
+
+            fetch('/delete_workouts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ workout_ids: workoutIds })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    fetchWorkouts();
+                } else {
+                    alert('Error deleting workouts: ' + data.message);
+                }
+            });
+        });
+
+        function fetchWorkouts() {
+            fetch('/workouts')
+            .then(response => response.json())
+            .then(data => {
+                const workoutsList = document.getElementById('workouts-list');
+                workoutsList.innerHTML = '';
+                const deleteButton = document.getElementById('delete-selected');
+                if (data.length === 0) {
+                    deleteButton.style.display = 'none';
+                } else {
+                    deleteButton.style.display = 'block'; // Or 'inline-block' depending on original display style
+                }
+                data.forEach(workout => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><input type="checkbox" class="workout-checkbox" data-id="${workout.id}"></td>
+                        <td>${workout.customer_name}</td>
+                        <td>${workout.workout}</td>
+                        <td>${workout.category}</td>
+                        <td>${workout.duration}</td>
+                        <td>${formatTime(workout.starting_time)}</td>
+                    `;
+                    workoutsList.appendChild(row);
+                });
+                const checkboxes = document.querySelectorAll('.workout-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', toggleDeleteButton);
+                });
+                toggleDeleteButton();
+            });
+        }
+
+        function formatTime(time) {
+            const hours = parseInt(time, 10);
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
+            return `${formattedHours}:00 ${ampm}`;
+        }
+
+        function toggleDeleteButton() {
+            const deleteButton = document.getElementById('delete-selected');
+            const anyCheckboxSelected = document.querySelectorAll('.workout-checkbox:checked').length > 0;
+            deleteButton.disabled = !anyCheckboxSelected;
+            if (anyCheckboxSelected) {
+                deleteButton.style.backgroundColor = ''; // Reset to default or a distinct color
+                deleteButton.style.cursor = 'pointer';
+            } else {
+                deleteButton.style.backgroundColor = '#cccccc'; // Grey out
+                deleteButton.style.cursor = 'not-allowed';
+            }
+        }
+
+        function fetchStats() {
+            fetch('/stats')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('total-workouts').textContent = data.total_workouts;
+                document.getElementById('total-time').textContent = data.total_time;
+                document.getElementById('average-time').textContent = data.average_time;
+                document.getElementById('most-common-workout').textContent = data.most_common_workout;
+                document.getElementById('most-common-category').textContent = data.most_common_category;
+                const categoryBreakdownList = document.getElementById('category-breakdown');
+                categoryBreakdownList.innerHTML = '';
+                for (const category in data.category_breakdown) {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${category}: ${data.category_breakdown[category]}`;
+                    categoryBreakdownList.appendChild(listItem);
+                }
+            });
+        }
+
+        document.getElementById('workout-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const customerName = document.getElementById('customerName').value;
+            const workoutName = document.getElementById('workoutName').value;
+            const category = document.getElementById('category').value;
+            const duration = document.getElementById('duration').value;
+            const startingTime = document.getElementById('startingTime').value;
+
+            fetch('/add_workout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ customer_name: customerName, workout_name: workoutName, category: category, duration: parseInt(duration), starting_time: parseInt(startingTime) })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Workout added successfully!');
+                    document.getElementById('workout-form').reset();
+                    updateWorkoutNames();
+                    openTab({ currentTarget: document.querySelector('.tab-button.active') }, 'add-workout');
+                } else {
+                    alert('Error adding workout: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while adding the workout.');
+            });
+        });
+        updateWorkoutNames();
+        openTab({ currentTarget: document.querySelector('.tab-button.active') }, 'add-workout');
+    </script>
+</body>
+</html>
