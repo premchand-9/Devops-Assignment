@@ -96,6 +96,36 @@ docker-compose up --build
     └── test_workout_manager.py # Tests for the WorkoutManager model
 ```
 
+## CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and deployment. The pipeline automatically runs on every push to the `balu` branch.
+
+### Pipeline Overview
+
+The CI/CD pipeline consists of a single job called `build-and-test` that:
+
+1. **Triggers**: Runs on every push to the `balu` branch
+2. **Environment**: Uses Ubuntu latest as the runner
+3. **Steps**:
+   - Checks out the repository code
+   - Sets up Docker Compose with the latest version
+   - Builds the Docker image and starts the application
+   - Runs the test suite using pytest
+   - Cleans up by stopping the Docker containers
+
+### Workflow File
+
+The pipeline configuration is located at `.github/workflows/main.yml` and includes:
+- Automated testing to ensure code quality
+- Docker containerization for consistent deployment
+- Integration with the existing Docker Compose setup
+
+### Benefits
+
+- **Automated Testing**: Ensures all code changes are tested before deployment
+- **Consistent Environment**: Uses Docker to maintain consistent build and test environments
+- **Quality Assurance**: Catches potential issues early in the development process
+
 ## Development
 
 ### Running Tests
